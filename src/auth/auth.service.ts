@@ -1,10 +1,18 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
+import * as bcrypt from 'bcrypt';
 
-type AuthResult = { accessToken: string; userId: number; username: string };
-
-// TODO: use bcrypt to store hashed passwords and compare stored passwords and input password
+type AuthResult = {
+  accessToken: string;
+  userId: number;
+  email: string;
+  name: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -13,21 +21,28 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signIn(username: string, pass: string): Promise<AuthResult> {
-    const user = await this.usersService.findOne(username);
+  async signIn(email: string, password: string): Promise<AuthResult> {
+    const user = await this.usersService.findOne(email);
 
-    if (user?.password !== pass) {
-      throw new UnauthorizedException();
+    if (!user) {
+      throw new NotFoundException(`No user found for provided email ${email}`);
     }
 
-    const payload = { sub: user.userId, username: user.username };
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    const payload = { sub: user.id, username: user.email };
 
     // TODO: generate JWT and return it here instead of the user object
 
     return {
       accessToken: await this.jwtService.signAsync(payload),
-      userId: user.userId,
-      username: user.username,
+      userId: user.id,
+      email: user.email,
+      name: user.name,
     };
   }
 }
