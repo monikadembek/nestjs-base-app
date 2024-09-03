@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -124,5 +125,30 @@ export class AuthService {
 
   async logout(userId: string) {
     return this.usersService.update(+userId, { refreshToken: null });
+  }
+
+  async refreshToken(userId: string, refreshToken: string) {
+    // check if user with provide id exists and if it contains the refresh token
+    const user = await this.usersService.findById(+userId);
+    if (!user || !user.refreshToken) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    // verify the hashed refreshToken from user table with the provided refresh token from the client
+    const refreshTokenMatches = await bcrypt.compare(
+      refreshToken,
+      user.refreshToken,
+    );
+
+    if (!refreshTokenMatches) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    // generate new tokens if refresh token matches,
+    // update new refresh token in db ans return both tokens to the client
+    const tokens = await this.generateTokens(user.id, user.email);
+    await this.updateRefreshToken(`${user.id}`, tokens.refreshToken);
+
+    return tokens;
   }
 }

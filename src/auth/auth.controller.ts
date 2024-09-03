@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AccessTokenGuard } from '../shared/guards/accessToken.guard';
+import { RefreshTokenGuard } from 'src/shared/guards/refreshToken.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -40,5 +41,14 @@ export class AuthController {
   @Get('profile')
   getProfile(@Request() request) {
     return request.user;
+  }
+
+  // in refresh endpoint client must pass stored refresh token in authorization header as Bearer token
+  @UseGuards(RefreshTokenGuard)
+  @Get('refresh')
+  refresh(@Request() request) {
+    const userId = request.user.sub;
+    const refreshToken = request.user.refreshToken;
+    return this.authService.refreshToken(userId, refreshToken);
   }
 }

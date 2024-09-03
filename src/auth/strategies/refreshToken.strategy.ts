@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JWT_REFRESH_SECRET } from '../../configs/jwt-secrets';
+import { Request } from 'express';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(
@@ -18,7 +19,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
   }
 
   async validate(req: Request, payload: any): Promise<any> {
-    const authorization = req.headers.get('Authorization');
+    const authorization = req.headers.authorization;
     const refreshToken = authorization.replace('Bearer', '').trim();
     return { ...payload, refreshToken };
   }
