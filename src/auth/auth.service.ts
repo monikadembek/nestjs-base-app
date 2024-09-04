@@ -9,8 +9,8 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { JWT_ACCESS_SECRET, JWT_REFRESH_SECRET } from '../configs/jwt-secrets';
 import { SignInDto } from './dto/sign-in.dto';
+import { ConfigService } from '@nestjs/config';
 
 type AuthResult = {
   accessToken: string;
@@ -25,6 +25,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   saltRounds = 10;
@@ -59,8 +60,8 @@ export class AuthService {
           email,
         },
         {
-          secret: JWT_ACCESS_SECRET,
-          expiresIn: '24h',
+          secret: this.configService.get<string>('jwt.accessTokenSecret'),
+          expiresIn: this.configService.get<string>('jwt.accessTokenExpiresIn'),
         },
       ),
       this.jwtService.signAsync(
@@ -69,8 +70,10 @@ export class AuthService {
           email,
         },
         {
-          secret: JWT_REFRESH_SECRET,
-          expiresIn: '7d',
+          secret: this.configService.get<string>('jwt.refreshTokenSecret'),
+          expiresIn: this.configService.get<string>(
+            'jwt.refreshTokenExpiresIn',
+          ),
         },
       ),
     ]);
