@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from '../config/configuration';
 import { validationSchema } from '../config/validation';
 import { EmailModule } from './email/email.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { EmailModule } from './email/email.module';
     AuthModule,
     UsersModule,
     DatabaseModule,
+    EventEmitterModule.forRoot(),
     EmailModule,
   ],
   controllers: [AppController],
