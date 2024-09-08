@@ -11,6 +11,8 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AccountCreatedEvent } from './events/account-created.event';
 
 type AuthResult = {
   accessToken: string;
@@ -26,11 +28,14 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   saltRounds = 10;
 
-  async signUp(createUserDto: CreateUserDto): Promise<any> {
+  async signUp(
+    createUserDto: CreateUserDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const userExists = await this.usersService.findByEmail(createUserDto.email);
     if (userExists) {
       throw new BadRequestException('User already exists');
@@ -49,7 +54,18 @@ export class AuthService {
     const tokens = await this.generateTokens(newUser.id, newUser.email);
     await this.updateRefreshToken(`${newUser.id}`, tokens.refreshToken);
 
+    if (newUser) {
+      this.emitAccountCreatedEvent(newUser);
+    }
+
     return tokens;
+  }
+
+  private emitAccountCreatedEvent(newUser): void {
+    const accountCreatedEvent = new AccountCreatedEvent();
+    accountCreatedEvent.userName = newUser.name;
+    accountCreatedEvent.userEmail = newUser.email;
+    this.eventEmitter.emit('auth.account-created', accountCreatedEvent);
   }
 
   async generateTokens(userId: number, email: string) {
