@@ -15,6 +15,17 @@ export type User = {
   updatedAt: Date;
 };
 
+// created especially for swagger, as there was a problem with using User type, swagger required UserDto class
+export class UserDto {
+  id: number;
+  email: string;
+  password: string;
+  name: string;
+  refreshToken: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: DatabaseService) {}

@@ -10,4 +10,10 @@ export default () => ({
     accessTokenExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
     refreshTokenExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
   },
+  mailer: {
+    host: process.env.MAILER_HOST,
+    port: process.env.MAILER_PORT,
+    user: process.env.MAILER_USER,
+    password: process.env.MAILER_PASSWORD,
+  },
 });
